@@ -1,5 +1,6 @@
 from sqlalchemy.orm import validate
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import CheckConstraint,Column,String
 
 db = SQLAlchemy()
 
@@ -25,5 +26,16 @@ class Power(db.Model):
             raise ValueError('Description must be at least 20 characters long')
         return description
 
+class HeroPower(db.Model):
+    __tablename__ = 'hero_power'
 
+    hero_id = db.Column(db.Integer,db.ForeignKey('hero.id'),primary_key=True)
+    power_id = db.Column(db.Column(db.Integer,db.ForeignKey('power.id'),primary_key=True))
+    hero = db.relationship('Hero',back_populates='powers',overlaps='powers')
+    power = db.relationship('Power',back_populates='heroes',overlaps='heroes')
+    strength = db.Column(db.String(20),nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(strength.in_(['Strong','Weak','Average',]),name='check_strength'),
+    )
 # add any models you may need. 
