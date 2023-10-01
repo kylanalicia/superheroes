@@ -31,6 +31,29 @@ def get_heroes():
     # jsonify to convert the response data to JSON format and return with a 200 (OK) status
     return jsonify(hero_data), 200
 
+@app.route('/heroes/<int:id>',methods=['GET'])
+def hero_by_id(id):
+    hero = Hero.query.get(id)
+    if hero is None:
+        return jsonify({"error":"Hero not found"},404)
+    
+    powers = [
+        {
+            'id': power.id,
+            'name': power.name,
+            'description': power.description
+        }
+        for power in hero.powers
+    ]
+
+    hero_data = {
+        'id': hero.id,
+        'name': hero.name,
+        'super_name': hero.super_name,
+        'powers': powers
+    }
+    return jsonify(hero_data)
+
 
 if __name__ == '__main__':
     app.run(port=5555)
