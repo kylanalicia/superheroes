@@ -141,43 +141,53 @@ def update_power(id):
     # If 'description' is not provided in the request, return a JSON response with a 400 (Bad Request) status
     return jsonify({"error": "Description not provided"}), 400
 
-@app.route('/hero_powers',methods=['POST'])
+@app.route('/hero_powers', methods=['POST'])
 def create_hero_power():
+    # Get JSON data from the request
     data = request.get_json()
+    
+    # Extract 'strength', 'power_id', and 'hero_id' from the JSON data
     strength = data.get('strength')
     power_id = data.get('power_id')
     hero_id = data.get('hero_id')
 
+    # Check if any of the required fields is missing in the JSON data
     if hero_id is None or power_id is None or strength is None:
         response = {
             'errors': ['Missing required fields']
         }
-        return jsonify(response),400
-    
+        # Return a JSON response with a 400 (Bad Request) status
+        return jsonify(response), 400
+
+    # Retrieve the hero and power objects from the database
     hero = Hero.query.get(hero_id)
     power = Power.query.get(power_id)
 
+    # Check if the hero or power is not found
     if hero is None or power is None:
         response = {
             'errors': ['Hero or power not found']
         }
+        # Return a JSON response with a 404 (Not Found) status
         return jsonify(response), 404
+
+    # Create a new HeroPower association and add it to the database
     hero_power = HeroPower(strength=strength, power=power, hero=hero)
     db.session.add(hero_power)
     db.session.commit()
 
-    # retrieve the data related to the hero
+    # Retrieve the updated data related to the hero
     hero_data = {
         'id': hero.id,
         'name': hero.name,
         'super_name': hero.super_name,
-        'powers': [{'id': p.id, 'name':p.name, 'description':p.description}
+        'powers': [{'id': p.id, 'name': p.name, 'description': p.description}
                    for p in hero.powers]
     }
 
+    # Create a JSON response with the updated hero data and return with a 200 (OK) status
     response = jsonify(hero_data)
     return response, 200
-    
 
 if __name__ == '__main__':
     app.run(port=5555)
