@@ -3,7 +3,7 @@
 from flask import Flask, make_response,jsonify
 from flask_migrate import Migrate
 
-from models import db, Hero
+from models import Power, db, Hero
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db/app.db'
@@ -63,5 +63,20 @@ def hero_by_id(id):
     return jsonify(hero_data)
 
 
-if __name__ == '__main__':
-    app.run(port=5555)
+@app.route('/powers', methods=['GET'])
+def get_powers():
+    # Retrieve a list of powers from the database
+    powers = Power.query.all()
+
+    # Create a list of dictionaries containing power data
+    power_data = [
+        {
+            'id': power.id,
+            'name': power.name,
+            'description': power.description,
+        }
+        for power in powers
+    ]
+
+    # Use jsonify to convert the response data to JSON format and return with a default 200 (OK) status
+    return jsonify(power_data)
