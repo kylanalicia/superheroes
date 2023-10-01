@@ -81,17 +81,24 @@ def get_powers():
     # Use jsonify to convert the response data to JSON format and return with a default 200 (OK) status
     return jsonify(power_data)
 
-@app.route('/powers/<int:id>',methods=['GET'])
+@app.route('/powers/<int:id>', methods=['GET'])
 def power_by_id(id):
+    # Retrieve a power from the database by ID
     power = Power.query.get(id)
+
+    # Check if the power with the specified ID exists
     if power is None:
-        return jsonify({"error","Power not found"}),404
-    
+        # If not found, return a JSON response with a 404 (Not Found) status
+        return jsonify({"error": "Power not found"}, 404)
+
+    # Create a dictionary containing power data
     power_data = {
         'id': power.id,
         'name': power.name,
         'description': power.description,
     }
+
+    # Use jsonify to convert the response data to JSON format and return with a default 200 (OK) status
     return jsonify(power_data)
 
 if __name__ == '__main__':
