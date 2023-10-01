@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, make_response,jsonify
+from flask import Flask, make_response,jsonify,request
 from flask_migrate import Migrate
 
 from models import Power, db, Hero
@@ -100,6 +100,35 @@ def power_by_id(id):
 
     # Use jsonify to convert the response data to JSON format and return with a default 200 (OK) status
     return jsonify(power_data)
+
+@app.route('/powers/<int:id>', methods=['PATCH'])
+def update_power(id):
+    power = Power.query.get(id)
+    if power is None:
+        return jsonify({"error": "Power not found"}), 404
+
+    description = request.json.get('description')
+    if description is not None:
+        # Perform validation on power.description
+        try:
+            # Assuming Power.validate_description is a method to validate the description
+            Power.validate_description(power, 'description', description)
+            # If validation is successful, update the power's description
+            power.description = description
+            db.session.commit()  # Commit the changes to the database
+
+            power_data = {
+                'id': power.id,
+                'name': power.name,
+                'description': power.description,
+            }
+            return jsonify(power_data), 200  # Return with a 200 (OK) status
+        except ValueError as e:
+            return jsonify({"errors": [str(e)]}), 400
+
+    # If description is not provided in the request, return a 400 (Bad Request) status
+    return jsonify({"error": "Description not provided"}), 400
+
 
 if __name__ == '__main__':
     app.run(port=5555)
