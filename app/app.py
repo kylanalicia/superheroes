@@ -3,7 +3,7 @@
 from flask import Flask, make_response,jsonify,request
 from flask_migrate import Migrate
 
-from models import Power, db, Hero
+from models import HeroPower, Power, db, Hero
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db/app.db'
@@ -103,32 +103,81 @@ def power_by_id(id):
 
 @app.route('/powers/<int:id>', methods=['PATCH'])
 def update_power(id):
+    # Retrieve a power from the database by ID
     power = Power.query.get(id)
+
+    # Check if the power with the specified ID exists
     if power is None:
+        # If not found, return a JSON response with a 404 (Not Found) status
         return jsonify({"error": "Power not found"}), 404
 
+    # Retrieve the 'description' field from the JSON data in the request
     description = request.json.get('description')
+
+    # Check if 'description' is provided in the request
     if description is not None:
-        # Perform validation on power.description
         try:
-            # Assuming Power.validate_description is a method to validate the description
+            # Perform validation on the provided description
             Power.validate_description(power, 'description', description)
-            # If validation is successful, update the power's description
+            
+            # If validation is successful, update the power's description in the database
             power.description = description
             db.session.commit()  # Commit the changes to the database
 
+            # Create a dictionary containing the updated power data
             power_data = {
                 'id': power.id,
                 'name': power.name,
                 'description': power.description,
             }
-            return jsonify(power_data), 200  # Return with a 200 (OK) status
+            
+            # Use jsonify to convert the response data to JSON format and return with a 200 (OK) status
+            return jsonify(power_data), 200
+
         except ValueError as e:
+            # If validation fails, return a JSON response with validation error(s) and a 400 (Bad Request) status
             return jsonify({"errors": [str(e)]}), 400
 
-    # If description is not provided in the request, return a 400 (Bad Request) status
+    # If 'description' is not provided in the request, return a JSON response with a 400 (Bad Request) status
     return jsonify({"error": "Description not provided"}), 400
 
+@app.route('/hero_powers',methods=['POST'])
+def create_hero_power():
+    data = request.get_json()
+    strength = data.get('strength')
+    power_id = data.get('power_id')
+    hero_id = data.get('hero_id')
+
+    if hero_id is None or power_id is None or strength is None:
+        response = {
+            'errors': ['Missing required fields']
+        }
+        return jsonify(response),400
+    
+    hero = Hero.query.get(hero_id)
+    power = Power.query.get(power_id)
+
+    if hero is None or power is None:
+        response = {
+            'errors': ['Hero or power not found']
+        }
+        return jsonify(response), 404
+    hero_power = HeroPower(strength=strength, power=power, hero=hero)
+    db.session.add(hero_power)
+    db.session.commit()
+
+    # retrieve the data related to the hero
+    hero_data = {
+        'id': hero.id,
+        'name': hero.name,
+        'super_name': hero.super_name,
+        'powers': [{'id': p.id, 'name':p.name, 'description':p.description}
+                   for p in hero.powers]
+    }
+
+    response = jsonify(hero_data)
+    return response, 200
+    
 
 if __name__ == '__main__':
     app.run(port=5555)
