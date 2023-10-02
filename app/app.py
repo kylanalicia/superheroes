@@ -1,17 +1,28 @@
 #!/usr/bin/env python3
 
 from flask import Flask, make_response,jsonify,request
+from flask_cors import CORS
 from flask_migrate import Migrate
 
 from models import HeroPower, Power, db, Hero
 
+hero1 = Hero(name = "Kamala Khan", super_name = "Ms. Marvel")
+hero2 = Hero(name = "Gwen Stacy", super_name = "Spider-Gwen")
+power1 = Power(name = "elasticity", description = "can stretch the human body to extreme lengths")
+hero_power1 = HeroPower(hero_id = 1,power_id = 1,strength = "Average")
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db/app.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 migrate = Migrate(app, db)
+CORS(app)
 
 db.init_app(app)
+# with app.app_context():
+#     db.session.add(hero_power1)
+#     db.session.commit()
+
 
 @app.route('/heroes', methods=['GET'])
 def get_heroes():
